@@ -110,7 +110,7 @@ export default function Home() {
       <div className="w-full max-w-lg">
         <header className="mb-8 flex justify-between items-center relative">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
-            Todo App
+            My Todo App
           </h1>
           <div className="flex items-center gap-2">
             <button

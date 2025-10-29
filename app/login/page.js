@@ -1,28 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { z } from "zod/v4";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { loginUser } from "../actions/userAction";
+import { loginSchema } from "@/lib/schema/userSchema";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("procodrr@gmail.com");
-  const [password, setPassword] = useState("123456");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const response = await fetch("/api/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
+  const [state, formAction, isPending] = useActionState(loginUser, {});
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (state.success) {
+      router.push("/");
+    } else {
+      setErrors(state.errors);
+    }
+  }, [state]);
+
+  const handleFormAction = async () => {
+    const { success, data, error } = loginSchema.safeParse({
+      email,
+      password,
     });
-    const data = await response.json();
-    console.log(data);
-    if (response.status === 401) {
-      return router.push("/login");
+
+    if (!success) {
+      return setErrors(z.flattenError(error).fieldErrors);
     }
-    if (!data.error) {
-      return router.push("/");
-    }
+
+    setErrors({});
+    return formAction(data);
   };
 
   return (
@@ -34,18 +47,20 @@ export default function LoginPage() {
           </h1>
         </header>
         <h2 className="text-2xl font-semibold mb-4">Login</h2>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form action={handleFormAction} className="space-y-4" noValidate>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Email
             </label>
             <input
               type="email"
+              name="email"
               className="mt-1 w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-900 dark:text-white"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+            <p className="text-xs text-red-500 -mb-2">{errors?.email}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -53,11 +68,13 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
+              name="password"
               className="mt-1 w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-900 dark:text-white"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <p className="text-xs text-red-500 -mb-2">{errors?.password}</p>
           </div>
           <button
             type="submit"
